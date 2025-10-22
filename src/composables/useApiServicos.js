@@ -63,10 +63,26 @@ export function useApiServicos() {
      }
   }
 
+  const buscarTodosServicos = async () => {
+     try {
+        // ❗️ Assumindo que o endpoint é /servicos (ou algo similar)
+        const { data, error } = await useFetch('/servicos', { 
+            fetch: api,
+            method: 'GET'
+        }).json()
+        
+        if (error.value) throw (error.value)
+        return { data: data.value, error: null }
+     } catch (err) {
+        return { data: null, error: err.data || err }
+     }
+  }
+
   return {
     criarServico,
     editarServico,
     excluirServico,
-    buscarServico
+    buscarServico,
+    buscarTodosServicos
   }
 }

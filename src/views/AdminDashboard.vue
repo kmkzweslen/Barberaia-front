@@ -1,114 +1,302 @@
 <template>
   <section class="admin-dashboard">
-    <h1>Painel do Usuário</h1>
+    <h1>Painel Administrativo</h1>
     <div class="options">
-      <button @click="selected = 'servicos'">Gerenciar Serviços</button>
-      <button @click="selected = 'clientes'">Gerenciar Clientes</button>
+      <button @click="selectTab('servicos')" :disabled="isLoadingServicos || isLoadingClientes">
+        Gerenciar Serviços
+      </button>
+      <button @click="selectTab('clientes')" :disabled="isLoadingServicos || isLoadingClientes">
+        Gerenciar Clientes
+      </button>
     </div>
 
     <div v-if="selected === 'servicos'">
       <h2>Serviços</h2>
-      <form @submit.prevent="isEditingServico ? updateServico() : addServico()">
-        <input v-model="novoServico.nome" placeholder="Nome do serviço" required />
-        <input type="number" v-model.number="novoServico.preco" placeholder="Preço do serviço" required />
-        <input v-model="novoServico.descricao" placeholder="Descrição do serviço" required />
-        <button type="submit">{{ isEditingServico ? 'Atualizar Serviço' : 'Cadastrar Serviço' }}</button>
-        <button v-if="isEditingServico" type="button" @click="cancelEditServico">Cancelar</button>
+
+      <div v-if="validationErrors.servico" class="validation-errors">
+        <div v-for="error in validationErrors.servico" :key="error">{{ error[0] }}</div>
+      </div>
+
+      <form @submit.prevent="handleServicoSubmit">
+        <input v-model="formServico.nome" placeholder="Nome do serviço" required />
+        <input type="number" v-model.number="formServico.preco" placeholder="Preço do serviço" required />
+        <input v-model="formServico.descricao" placeholder="Descrição do serviço" required />
+
+        <button type="submit" :disabled="isSavingServico">
+          {{ isSavingServico ? 'Salvando...' : (isEditingServico ? 'Atualizar Serviço' : 'Cadastrar Serviço') }}
+        </button>
+        <button v-if="isEditingServico" type="button" @click="cancelEditServico" class="cancel-btn"
+          :disabled="isSavingServico">
+          Cancelar
+        </button>
       </form>
+
+      <div v-if="isLoadingServicos">Carregando serviços...</div>
+      <div v-if="errorServicos" class="error-list">{{ errorServicos }}</div>
+
       <ul>
-        <li v-for="(servico, index) in servicos" :key="index">
-          Nome: {{ servico.nome }}, Preço: R$ {{ servico.preco.toFixed(2) }}, Descrição: {{ servico.descricao }}
-          <button @click="editServico(index)">Editar</button>
-          <button @click="removerServico(index)">Excluir</button>
+        <li v-for="servico in servicos" :key="servico.id">
+          Nome: {{ servico.nome }}, Preço: R$ {{ servico.preco.toFixed(2) }}
+          <button @click="editServico(servico)" :disabled="isSavingServico">Editar</button>
+          <button @click="removerServico(servico.id)" class="delete-btn" :disabled="isSavingServico">Excluir</button>
         </li>
       </ul>
     </div>
 
     <div v-if="selected === 'clientes'">
       <h2>Clientes</h2>
-      <form @submit.prevent="isEditingCliente ? updateCliente() : addCliente()">
-        <input v-model="novoCliente.nome" placeholder="Nome do cliente" required />
-        <input v-model="novoCliente.telefone" placeholder="Telefone" required />
-        <input v-model="novoCliente.email" type="email" placeholder="E-mail" required />
-        <button type="submit">{{ isEditingCliente ? 'Atualizar Cliente' : 'Cadastrar Cliente' }}</button>
-        <button v-if="isEditingCliente" type="button" @click="cancelEditCliente">Cancelar</button>
+
+      <div v-if="validationErrors.cliente" class="validation-errors">
+        <div v-for="error in validationErrors.cliente" :key="error">{{ error[0] }}</div>
+      </div>
+
+      <form @submit.prevent="handleClienteSubmit">
+        <input v-model="formCliente.nome" placeholder="Nome do cliente" required />
+        <input v-model="formCliente.telefone" placeholder="Telefone" required />
+        <input v-model="formCliente.email" type="email" placeholder="E-mail" required />
+
+        <button type="submit" :disabled="isSavingCliente">
+          {{ isSavingCliente ? 'Salvando...' : (isEditingCliente ? 'Atualizar Cliente' : 'Cadastrar Cliente') }}
+        </button>
+        <button v-if="isEditingCliente" type="button" @click="cancelEditCliente" class="cancel-btn"
+          :disabled="isSavingCliente">
+          Cancelar
+        </button>
       </form>
+
+      <div v-if="isLoadingClientes">Carregando clientes...</div>
+      <div v-if="errorClientes" class="error-list">{{ errorClientes }}</div>
+
       <ul>
-        <li v-for="(cliente, index) in clientes" :key="index">
+        <li v-for="cliente in clientes" :key="cliente.email">
           {{ cliente.nome }} - {{ cliente.telefone }} - {{ cliente.email }}
-          <button @click="editCliente(index)">Editar</button>
-          <button @click="removerCliente(index)">Excluir</button>
+          <button @click="editCliente(cliente)" :disabled="isSavingCliente">Editar</button>
+          <button @click="removerCliente(cliente.email)" class="delete-btn" :disabled="isSavingCliente">Excluir</button>
         </li>
       </ul>
     </div>
   </section>
 </template>
 
-<script>
-export default {
-  name: 'AdminDashboard',
-  data() {
-    return {
-      selected: null,
-      servicos: [],
-      clientes: [],
-      novoServico: { nome: '', preco: 0, descricao: '' },
-      isEditingServico: false,
-      servicoIndex: null,
-      novoCliente: { nome: '', telefone: '', email: '' },
-      isEditingCliente: false,
-      clienteIndex: null,
-    };
-  },
-  methods: {
-    addServico() {
-      this.servicos.push({ ...this.novoServico });
-      this.novoServico = { nome: '', preco: 0, descricao: '' };
-    },
-    editServico(index) {
-      this.servicoIndex = index;
-      this.novoServico = { ...this.servicos[index] };
-      this.isEditingServico = true;
-    },
-    updateServico() {
-      this.servicos.splice(this.servicoIndex, 1, { ...this.novoServico });
-      this.cancelEditServico();
-    },
-    cancelEditServico() {
-      this.novoServico = { nome: '', preco: 0, descricao: '' };
-      this.isEditingServico = false;
-      this.servicoIndex = null;
-    },
-    removerServico(index) {
-      this.servicos.splice(index, 1);
-    },
+<script setup>
+import { ref, onMounted, watch } from 'vue'; // MELHORIA: Adicionado 'watch'
+import { useApiServicos } from '@/composables/useApiServicos';
+import { useApiClientes } from '@/composables/useApiClientes';
 
-    addCliente() {
-      this.clientes.push({ ...this.novoCliente });
-      this.novoCliente = { nome: '', telefone: '', email: '' };
-    },
-    editCliente(index) {
-      this.clienteIndex = index;
-      this.novoCliente = { ...this.clientes[index] };
-      this.isEditingCliente = true;
-    },
-    updateCliente() {
-      this.clientes.splice(this.clienteIndex, 1, { ...this.novoCliente });
-      this.cancelEditCliente();
-    },
-    cancelEditCliente() {
-      this.novoCliente = { nome: '', telefone: '', email: '' };
-      this.isEditingCliente = false;
-      this.clienteIndex = null;
-    },
-    removerCliente(index) {
-      this.clientes.splice(index, 1);
-    },
-  },
+// --- Imports dos Composables ---
+const { buscarTodosServicos, criarServico, editarServico, excluirServico } = useApiServicos();
+const { buscarTodosClientes, criarCliente, editarCliente, excluirCliente } = useApiClientes();
+
+// --- Estado da UI ---
+const selected = ref('servicos'); // MELHORIA: Inicia na aba de serviços
+
+// MELHORIA: Refs de Loading Granulares
+const isLoadingServicos = ref(false);
+const isLoadingClientes = ref(false);
+const isSavingServico = ref(false);
+const isSavingCliente = ref(false);
+
+// MELHORIA: Refs de Erro Granulares
+const errorServicos = ref(null);
+const errorClientes = ref(null);
+const validationErrors = ref({ servico: null, cliente: null });
+
+// --- Estado dos Dados ---
+const servicos = ref([]);
+const clientes = ref([]);
+
+const formServico = ref({ id: null, nome: '', preco: 0, descricao: '' });
+const isEditingServico = ref(false);
+
+const formCliente = ref({ nome: '', telefone: '', email: '' });
+const isEditingCliente = ref(false);
+let originalClienteEmail = null;
+
+// --- Funções de Carregamento de Dados ---
+
+// MELHORIA: Funções separadas para carregar cada lista
+const fetchAllServicos = async () => {
+  isLoadingServicos.value = true;
+  errorServicos.value = null; // Limpa erros antigos
+  try {
+    const { data, error } = await buscarTodosServicos();
+    if (error) throw error; // Joga o erro para o catch
+    if (data) servicos.value = data;
+  } catch (error) {
+    console.error("Erro ao buscar serviços:", error);
+    errorServicos.value = "Não foi possível carregar os serviços.";
+  } finally {
+    isLoadingServicos.value = false;
+  }
+};
+
+const fetchAllClientes = async () => {
+  isLoadingClientes.value = true;
+  errorClientes.value = null;
+  try {
+    const { data, error } = await buscarTodosClientes();
+    if (error) throw error;
+    if (data) clientes.value = data;
+  } catch (error) {
+    console.error("Erro ao buscar clientes:", error);
+    errorClientes.value = "Não foi possível carregar os clientes.";
+  } finally {
+    isLoadingClientes.value = false;
+  }
+};
+
+// MELHORIA: Carrega a primeira aba ao montar
+onMounted(fetchAllServicos);
+
+// MELHORIA: Carrega a outra aba quando o usuário clicar nela
+watch(selected, (newValue) => {
+  if (newValue === 'clientes' && clientes.value.length === 0) {
+    fetchAllClientes();
+  }
+});
+
+// Função para trocar de aba
+const selectTab = (tab) => {
+  selected.value = tab;
+};
+
+// MELHORIA: Função centralizada para tratar erros de API
+const handleApiError = (type, error) => {
+  console.error(`Erro ao salvar ${type}:`, error);
+  if (error.statusCode === 422 && error.data?.errors) {
+    // Erro de Validação
+    if (type === 'servico') {
+      validationErrors.value.servico = error.data.errors;
+    } else {
+      validationErrors.value.cliente = error.data.errors;
+    }
+  } else {
+    // Erro genérico
+    alert(`Erro: ${error.message || 'Não foi possível salvar.'}`);
+  }
+};
+
+
+// --- Lógica de Serviços ---
+const handleServicoSubmit = async () => {
+  isSavingServico.value = true;
+  validationErrors.value.servico = null; // Limpa erros antigos
+  let response;
+
+  try {
+    if (isEditingServico.value) {
+      response = await editarServico(formServico.value);
+    } else {
+      response = await criarServico(formServico.value);
+    }
+
+    if (response.error) throw response.error; // Joga o erro para o catch
+
+    // Sucesso
+    await fetchAllServicos(); // MELHORIA: Sempre recarrega a lista
+    cancelEditServico();
+
+  } catch (error) {
+    handleApiError('servico', error);
+  } finally {
+    isSavingServico.value = false;
+  }
+};
+
+const editServico = (servico) => {
+  formServico.value = { ...servico };
+  isEditingServico.value = true;
+  window.scrollTo(0, 0); // Rola para o topo para editar
+};
+
+const cancelEditServico = () => {
+  formServico.value = { id: null, nome: '', preco: 0, descricao: '' };
+  isEditingServico.value = false;
+  validationErrors.value.servico = null; // Limpa erros do form
+};
+
+const removerServico = async (id) => {
+  if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+
+  isSavingServico.value = true; // Reutiliza o 'isSaving' para bloquear a UI
+  try {
+    const { error } = await excluirServico(id);
+    if (error) throw error;
+
+    // Sucesso
+    await fetchAllServicos(); // MELHORIA: Sempre recarrega a lista
+
+  } catch (error) {
+    handleApiError('servico', error);
+  } finally {
+    isSavingServico.value = false;
+  }
+};
+
+// --- Lógica de Clientes ---
+const handleClienteSubmit = async () => {
+  isSavingCliente.value = true;
+  validationErrors.value.cliente = null;
+  let response;
+
+  try {
+    if (isEditingCliente.value) {
+      // Nota: Seu backend espera 'originalEmail' para 'editarCliente'?
+      // Se sim, seu composable 'editarCliente' precisa ser ajustado.
+      // Assumindo que o 'editarCliente' só precisa do objeto cliente (com o email novo/antigo):
+      response = await editarCliente(formCliente.value);
+    } else {
+      response = await criarCliente(formCliente.value);
+    }
+
+    if (response.error) throw response.error;
+
+    // Sucesso
+    await fetchAllClientes(); // MELHORIA: Sempre recarrega
+    cancelEditCliente();
+
+  } catch (error) {
+    handleApiError('cliente', error);
+  } finally {
+    isSavingCliente.value = false;
+  }
+};
+
+const editCliente = (cliente) => {
+  formCliente.value = { ...cliente };
+  // originalClienteEmail = cliente.email; // Você não precisa mais disso se 'editarCliente' for inteligente
+  isEditingCliente.value = true;
+  window.scrollTo(0, 0);
+};
+
+const cancelEditCliente = () => {
+  formCliente.value = { nome: '', telefone: '', email: '' };
+  isEditingCliente.value = false;
+  validationErrors.value.cliente = null;
+  // originalClienteEmail = null;
+};
+
+const removerCliente = async (email) => {
+  if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+
+  isSavingCliente.value = true;
+  try {
+    const { error } = await excluirCliente(email);
+    if (error) throw error;
+
+    // Sucesso
+    await fetchAllClientes(); // MELHORIA: Sempre recarrega
+
+  } catch (error) {
+    handleApiError('cliente', error);
+  } finally {
+    isSavingCliente.value = false;
+  }
 };
 </script>
 
 <style scoped>
+/* Seu CSS original... */
 .admin-dashboard {
   padding: 20px;
   background: #111;
@@ -144,11 +332,60 @@ button:hover {
   background-color: #4477cc;
 }
 
+/* MELHORIA: Estilo de botão desabilitado */
+button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+button.delete-btn {
+  background-color: #ff5555;
+}
+
+button.delete-btn:hover {
+  background-color: #cc4444;
+}
+
+button.cancel-btn {
+  background-color: #777;
+}
+
+button.cancel-btn:hover {
+  background-color: #555;
+}
+
 input {
   padding: 6px;
   margin: 5px 5px 5px 0;
   border-radius: 4px;
   border: none;
   width: 200px;
+}
+
+li {
+  list-style: none;
+  margin-bottom: 10px;
+}
+
+/* MELHORIA: Estilos para erros */
+.error-list {
+  color: #ff6b6b;
+  background: #2b1c1c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.validation-errors {
+  color: #ffb8b8;
+  font-size: 0.9em;
+  margin-top: 10px;
+  text-align: left;
+  padding-left: 5px;
+}
+
+.validation-errors div {
+  margin-bottom: 5px;
 }
 </style>

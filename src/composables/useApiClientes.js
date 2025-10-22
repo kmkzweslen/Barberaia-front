@@ -63,10 +63,26 @@ export function useApiClientes() {
         }
     }
 
+    const buscarTodosClientes = async () => {
+     try {
+        // ❗️ Assumindo que o endpoint é /clientes (ou algo similar)
+        const { data, error } = await useFetch('/clientes', { 
+            fetch: api,
+            method: 'GET'
+        }).json()
+        
+        if (error.value) throw (error.value)
+        return { data: data.value, error: null }
+     } catch (err) {
+        return { data: null, error: err.data || err }
+     }
+  }
+
     return {
         criarCliente,
         editarCliente,
         excluirCliente,
-        buscarCliente
+        buscarCliente,
+        buscarTodosClientes
     }
 }
