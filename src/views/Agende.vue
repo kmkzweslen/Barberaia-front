@@ -1,7 +1,7 @@
 <template>
   <section class="agendamento">
     <h1>Novo Agendamento</h1>
-    <form>
+    <form @submit.prevent="validarCampos">
       <label>
         Serviço
         <select v-model="servicoId" required>
@@ -29,6 +29,7 @@
         <input type="time" required />
       </label>
       <button type="submit" class="btn">Agendar</button>
+      <p v-if="errorMessage" class="ërror">{{ errorMessage }}</p>
     </form>
   </section>
 </template>
@@ -40,10 +41,24 @@ import { api } from '@/utils/api'
 const servicos = ref([])
 const barbeiros = ref([])
 
+const servicoId = ref('')
+const barbeiroEmail = ref('')
+const data = ref('')
+const hora = ref('')
+const errorMessage = ref('')
+
 onMounted(async () => {
   servicos.value = await api('/servico/buscarTodosServicos', { method: 'GET' })
   barbeiros.value = await api('/barbeiro/buscarTodosBarbeiros', { method: 'GET' })
 })
+
+function validarCampus() {
+  if (!servicoId.value || !barbeiroEmail.value || !data.value || !hora.value) {
+    errorMessage.value = 'Todos os campus são obrigatórios!'
+    return false
+  }
+  return true
+}
 </script>
 
 <style scoped>
