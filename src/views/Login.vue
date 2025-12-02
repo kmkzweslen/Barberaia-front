@@ -16,7 +16,7 @@
           Com Senha
         </button>
         <button :class="{active: clienteLoginMethod === 'otp'}" @click="clienteLoginMethod = 'otp'">
-          Com Código OTP
+          Com Código por Email
         </button>
       </div>
 
@@ -36,6 +36,11 @@
           {{ clienteStep === 1 ? 'Enviar Código' : 'Entrar como Cliente' }}
         </button>
       </form>
+
+      <div class="signup-link">
+        Não tem conta? 
+        <router-link to="/cadastro" class="link">Cadastre-se</router-link>
+      </div>
     </div>
     <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
     <div v-if="successMessage" class="success">{{ successMessage }}</div>
@@ -44,14 +49,9 @@
 
 <script>
 import { api } from '@/utils/api';
-import { useApiClientes } from '@/composables/useApiClientes';
 
 export default {
   name: 'Login',
-  setup() {
-    const { loginComSenha } = useApiClientes();
-    return { loginComSenha };
-  },
   data() {
     return {
       isAdmin: true,
@@ -130,24 +130,23 @@ export default {
       this.errorMessage = '';
       this.successMessage = '';
       try {
-        const { data, error } = await this.loginComSenha(
-          this.emailCliente,
-          this.senhaCliente
-        );
-
-        if (error) {
-          this.errorMessage = 'Email ou senha inválidos.';
-          return;
-        }
+        const data = await api('/cliente/auth/login-senha', {
+          method: 'POST',
+          body: {
+            username: this.emailCliente,
+            password: this.senhaCliente
+          }
+        });
 
         if (data && data.token) {
           localStorage.setItem('tokenCliente', data.token);
+          localStorage.setItem('emailCliente', this.emailCliente);
           this.$router.push('/cliente');
         } else {
           this.errorMessage = 'Falha na autenticação.';
         }
       } catch (error) {
-        this.errorMessage = 'Erro ao autenticar. Verifique os dados.';
+        this.errorMessage = 'Email ou senha inválidos.';
       }
     }
   }
@@ -240,6 +239,22 @@ input {
   background: #f90;
   color: #222;
   font-weight: bold;
+}
+
+.signup-link {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #bbb;
+}
+
+.link {
+  color: #f90;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 </style>
 

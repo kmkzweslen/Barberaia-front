@@ -44,6 +44,7 @@
         <input v-model="formCliente.nome" placeholder="Nome do cliente" required />
         <input v-model="formCliente.telefone" placeholder="Telefone" required />
         <input v-model="formCliente.email" type="email" placeholder="E-mail" required />
+        <input v-model="formCliente.senha" type="password" placeholder="Senha" :required="!isEditingCliente" minlength="6" />
         <button type="submit" :disabled="isSavingCliente">
           {{ isSavingCliente ? 'Salvando...' : (isEditingCliente ? 'Atualizar Cliente' : 'Cadastrar Cliente') }}
         </button>
@@ -125,7 +126,7 @@ const barbeiros = ref([]);
 const formServico = ref({ id: null, nome: '', preco: 0, descricao: '' });
 const isEditingServico = ref(false);
 
-const formCliente = ref({ nome: '', telefone: '', email: '' });
+const formCliente = ref({ nome: '', telefone: '', email: '', senha: '' });
 const isEditingCliente = ref(false);
 
 const formBarbeiro = ref({ nome: '', email: '', telefone: '' });
@@ -269,7 +270,7 @@ const editCliente = (cliente) => {
 };
 
 const cancelEditCliente = () => {
-  formCliente.value = { nome: '', telefone: '', email: '' };
+  formCliente.value = { nome: '', telefone: '', email: '', senha: '' };
   isEditingCliente.value = false;
   validationErrors.value.cliente = null;
 };
