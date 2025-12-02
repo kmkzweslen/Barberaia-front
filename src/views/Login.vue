@@ -10,16 +10,38 @@
       <input type="password" v-model="password" placeholder="Senha" required />
       <button type="submit" class="btn">Entrar</button>
     </form>
-    <form v-else @submit.prevent="clienteStep === 1 ? solicitarOtp() : validarOtp()">
-      <input v-if="clienteStep === 1" type="email" v-model="emailCliente" placeholder="E-mail" required />
-      <div v-else>
-        <input type="email" v-model="emailCliente" placeholder="E-mail" required disabled />
-        <input type="text" v-model="otp" maxlength="6" placeholder="Código OTP" required />
+    <div v-else>
+      <div class="login-method-tabs">
+        <button :class="{active: clienteLoginMethod === 'senha'}" @click="clienteLoginMethod = 'senha'">
+          Com Senha
+        </button>
+        <button :class="{active: clienteLoginMethod === 'otp'}" @click="clienteLoginMethod = 'otp'">
+          Com Código por Email
+        </button>
       </div>
-      <button type="submit" class="btn">
-        {{ clienteStep === 1 ? 'Enviar Código' : 'Entrar como Cliente' }}
-      </button>
-    </form>
+
+      <form v-if="clienteLoginMethod === 'senha'" @submit.prevent="loginClienteSenha">
+        <input type="email" v-model="emailCliente" placeholder="E-mail" required />
+        <input type="password" v-model="senhaCliente" placeholder="Senha" required />
+        <button type="submit" class="btn">Entrar</button>
+      </form>
+
+      <form v-else @submit.prevent="clienteStep === 1 ? solicitarOtp() : validarOtp()">
+        <input v-if="clienteStep === 1" type="email" v-model="emailCliente" placeholder="E-mail" required />
+        <div v-else>
+          <input type="email" v-model="emailCliente" placeholder="E-mail" required disabled />
+          <input type="text" v-model="otp" maxlength="6" placeholder="Código OTP" required />
+        </div>
+        <button type="submit" class="btn">
+          {{ clienteStep === 1 ? 'Enviar Código' : 'Entrar como Cliente' }}
+        </button>
+      </form>
+
+      <div class="signup-link">
+        Não tem conta? 
+        <router-link to="/cadastro" class="link">Cadastre-se</router-link>
+      </div>
+    </div>
     <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
     <div v-if="successMessage" class="success">{{ successMessage }}</div>
   </section>
@@ -37,8 +59,11 @@ export default {
       password: '',
       errorMessage: '',
       successMessage: '',
+      // Para escolha do método de login do cliente
+      clienteLoginMethod: 'senha', // 'senha' ou 'otp'
       // Para login cliente
       emailCliente: '',
+      senhaCliente: '',
       otp: '',
       clienteStep: 1
     };
@@ -98,6 +123,30 @@ export default {
         }
       } catch (error) {
         this.errorMessage = 'Falha ao validar OTP.';
+      }
+    },
+    // faz o login do cliente com senha   
+    async loginClienteSenha() {
+      this.errorMessage = '';
+      this.successMessage = '';
+      try {
+        const data = await api('/cliente/auth/login-senha', {
+          method: 'POST',
+          body: {
+            username: this.emailCliente,
+            password: this.senhaCliente
+          }
+        });
+
+        if (data && data.token) {
+          localStorage.setItem('tokenCliente', data.token);
+          localStorage.setItem('emailCliente', this.emailCliente);
+          this.$router.push('/cliente');
+        } else {
+          this.errorMessage = 'Falha na autenticação.';
+        }
+      } catch (error) {
+        this.errorMessage = 'Email ou senha inválidos.';
       }
     }
   }
@@ -167,4 +216,45 @@ input {
   margin-top: 10px;
   font-weight: bold;
 }
+
+.login-method-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  margin-top: 16px;
+}
+
+.login-method-tabs button {
+  padding: 6px 16px;
+  background: #333;
+  color: #bbb;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.login-method-tabs .active {
+  background: #f90;
+  color: #222;
+  font-weight: bold;
+}
+
+.signup-link {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #bbb;
+}
+
+.link {
+  color: #f90;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
 </style>
+

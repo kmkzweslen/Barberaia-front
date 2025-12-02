@@ -7,6 +7,7 @@ import Agende from '../views/Agende.vue';
 import Login from '../views/Login.vue';
 import AdminDashboard from '../views/AdminDashboard.vue';
 import ClientePerfil from '../views/ClientePerfil.vue';
+import Cadastro from '../views/Cadastro.vue';
 
 const routes = [
   { path: '/', name: 'home', component: Home },
@@ -14,6 +15,7 @@ const routes = [
   { path: '/barba-cabelo', name: 'barbaCabelo', component: BarbaCabelo },
   { path: '/agende', name: 'agende', component: Agende },
   { path: '/login', name: 'login', component: Login },
+  { path: '/cadastro', name: 'cadastro', component: Cadastro },
   { path: '/admin', name: 'admin', component: AdminDashboard,  meta: { requiresAdmin: true }},
   { path: '/cliente', name: 'cliente', component: ClientePerfil},
 ];
