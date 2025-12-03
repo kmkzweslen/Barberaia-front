@@ -49,9 +49,14 @@
 
 <script>
 import { api } from '@/utils/api';
+import { useAuth } from '@/composables/useAuth';
 
 export default {
   name: 'Login',
+  setup() {
+    const auth = useAuth();
+    return { auth };
+  },
   data() {
     return {
       isAdmin: true,
@@ -80,7 +85,7 @@ export default {
           }
         });
         if (data && data.token) {
-          localStorage.setItem('tokenAdmin', data.token);
+          this.auth.loginAdmin(data.token);
           this.$router.push('/admin');
         } else {
           this.errorMessage = 'Usuário ou senha inválidos.';
@@ -115,8 +120,7 @@ export default {
           }
         });
         if (data && data.token) {
-          localStorage.setItem('tokenCliente', data.token);
-          localStorage.setItem('emailCliente', this.emailCliente);
+          this.auth.loginCliente(data.token, this.emailCliente);
           this.$router.push('/cliente');
         } else {
           this.errorMessage = 'Código inválido ou expirado.';
@@ -139,8 +143,7 @@ export default {
         });
 
         if (data && data.token) {
-          localStorage.setItem('tokenCliente', data.token);
-          localStorage.setItem('emailCliente', this.emailCliente);
+          this.auth.loginCliente(data.token, this.emailCliente);
           this.$router.push('/cliente');
         } else {
           this.errorMessage = 'Falha na autenticação.';
