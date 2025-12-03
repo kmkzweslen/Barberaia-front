@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
-import Home from '../views/Home.vue'; 
-import NossaMarca from '../views/NossaMarca.vue';
-import BarbaCabelo from '../views/BarbaCabelo.vue';
+import Home from '../views/Home.vue';
 import Agende from '../views/Agende.vue';
 import Login from '../views/Login.vue';
 import AdminDashboard from '../views/AdminDashboard.vue';
@@ -11,13 +9,11 @@ import Cadastro from '../views/Cadastro.vue';
 
 const routes = [
   { path: '/', name: 'home', component: Home },
-  { path: '/nossa-marca', name: 'nossaMarca', component: NossaMarca },
-  { path: '/barba-cabelo', name: 'barbaCabelo', component: BarbaCabelo },
-  { path: '/agende', name: 'agende', component: Agende },
+  { path: '/agende', name: 'agende', component: Agende, meta: { requiresAuth: true } },
   { path: '/login', name: 'login', component: Login },
   { path: '/cadastro', name: 'cadastro', component: Cadastro },
-  { path: '/admin', name: 'admin', component: AdminDashboard,  meta: { requiresAdmin: true }},
-  { path: '/cliente', name: 'cliente', component: ClientePerfil},
+  { path: '/admin', name: 'admin', component: AdminDashboard, meta: { requiresAdmin: true } },
+  { path: '/cliente', name: 'cliente', component: ClientePerfil, meta: { requiresCliente: true } },
 ];
 
 const router = createRouter({
@@ -27,13 +23,34 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const requiresAdmin = to.meta.requiresAdmin;
+  const requiresCliente = to.meta.requiresCliente;
+  const requiresAuth = to.meta.requiresAuth;
+
   const tokenAdmin = localStorage.getItem('tokenAdmin');
+  const tokenCliente = localStorage.getItem('tokenCliente');
+
+  // Verificar se requer admin
   if (requiresAdmin && !tokenAdmin) {
     alert('Acesso negado. Faça login como administrador!');
     next('/login');
-  } else {
-    next();
+    return;
   }
+
+  // Verificar se requer cliente
+  if (requiresCliente && !tokenCliente) {
+    alert('Acesso negado. Faça login como cliente!');
+    next('/login');
+    return;
+  }
+
+  // Verificar se requer qualquer autenticação
+  if (requiresAuth && !tokenAdmin && !tokenCliente) {
+    alert('Você precisa estar logado para acessar esta página!');
+    next('/login');
+    return;
+  }
+
+  next();
 });
 
 export default router;
