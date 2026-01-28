@@ -14,6 +14,7 @@
       </div>
     </div>
 
+
     <div class="dashboard-container">
       <!-- Navigation Tabs -->
       <div class="nav-tabs">
@@ -26,6 +27,21 @@
           <component :is="tab.icon" />
           {{ tab.label }}
         </button>
+      </div>
+
+      <!-- Quick Access Cards -->
+      <div class="quick-access">
+        <router-link to="/admin/relatorio-servicos" class="quick-card">
+          <div class="card-icon">📊</div>
+          <h3>Serviços Mais Realizados</h3>
+          <p>Visualize os serviços com maior procura</p>
+        </router-link>
+        
+        <router-link to="/admin/agendamentos" class="quick-card">
+          <div class="card-icon">📅</div>
+          <h3>Agendamentos</h3>
+          <p>Gerencie todos os agendamentos</p>
+        </router-link>
       </div>
 
       <!-- Serviços -->
@@ -594,6 +610,50 @@ const handleLogout = () => {
   background: linear-gradient(135deg, #e63946, #c1121f);
   color: #fff;
   box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+}
+
+.quick-access {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.quick-card {
+  background: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 24px;
+  text-decoration: none;
+  color: #fff;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.quick-card:hover {
+  border-color: #e63946;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(230, 57, 70, 0.2);
+}
+
+.quick-card .card-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.quick-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  color: #e63946;
+}
+
+.quick-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #999;
 }
 
 .tab-content {
