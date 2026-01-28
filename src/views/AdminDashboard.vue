@@ -37,6 +37,12 @@
           <p>Visualize os serviços com maior procura</p>
         </router-link>
         
+        <router-link to="/admin/ranking-clientes" class="quick-card">
+          <div class="card-icon">🏆</div>
+          <h3>Ranking de Clientes</h3>
+          <p>Veja seus clientes mais ativos</p>
+        </router-link>
+        
         <router-link to="/admin/agendamentos" class="quick-card">
           <div class="card-icon">📅</div>
           <h3>Agendamentos</h3>
